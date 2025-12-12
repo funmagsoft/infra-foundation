@@ -3,6 +3,9 @@ name: Terraform Plan
 on:
   pull_request:
     branches: [main]
+    paths:
+      - 'terraform/**'
+      - '.github/workflows/terraform-plan.yml'
   workflow_dispatch:
     inputs:
       environment:
@@ -18,6 +21,7 @@ on:
 permissions:
   id-token: write
   contents: read
+  pull-requests: write
 
 jobs:
   plan:
@@ -56,7 +60,7 @@ jobs:
           ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
           ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           ARM_USE_OIDC: true
-        run: terraform plan -out=tfplan
+        run: terraform plan -no-color -out=tfplan
 
       - name: Upload Plan Artifact
         uses: actions/upload-artifact@v4

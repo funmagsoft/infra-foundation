@@ -18,9 +18,3 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
-
-variable "servicebus_sku" {
-  description = "SKU of the Azure Service Bus Namespace (Standard or Premium)"
-  type        = string
-  default     = "Standard"
-}

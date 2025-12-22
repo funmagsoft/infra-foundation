@@ -43,18 +43,6 @@ output "mgmt_nsg_id" {
   value       = module.network.mgmt_nsg_id
 }
 
-output "private_dns_zones" {
-  description = "Private DNS Zone IDs"
-  value = {
-    postgresql = module.private_dns.postgresql_zone_id
-    keyvault   = module.private_dns.keyvault_zone_id
-    blob       = module.private_dns.blob_zone_id
-    file       = module.private_dns.file_zone_id
-    servicebus = module.private_dns.servicebus_zone_id
-    acr        = module.private_dns.acr_zone_id
-  }
-}
-
 output "vpn_gateway_id" {
   description = "ID of the VPN Gateway"
   value       = var.enable_vpn_gateway ? module.vpn_gateway[0].vpn_gateway_id : null

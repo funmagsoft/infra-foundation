@@ -1,58 +1,22 @@
 #!/bin/bash
-set -e
 
-# Validate required environment variables
-validate_env_vars() {
-  local missing_vars=()
-  
-  if [ -z "$TENANT_ID" ]; then
-    missing_vars+=("TENANT_ID")
-  fi
-  
-  if [ -z "$SUBSCRIPTION_ID" ]; then
-    missing_vars+=("SUBSCRIPTION_ID")
-  fi
-  
-  if [ -z "$LOCATION" ]; then
-    missing_vars+=("LOCATION")
-  fi
-  
-  if [ -z "$ORGANIZATION" ]; then
-    missing_vars+=("ORGANIZATION")
-  fi
-  
-  if [ -z "$PROJECT" ]; then
-    missing_vars+=("PROJECT")
-  fi
-  
-  if [ ${#missing_vars[@]} -ne 0 ]; then
-    echo "Error: The following required environment variables are not set:" >&2
-    for var in "${missing_vars[@]}"; do
-      echo "  - $var" >&2
-    done
-    echo "" >&2
-    echo "Please set them before running this script:" >&2
-    echo "  export TENANT_ID=\"<your-tenant-id>\"" >&2
-    echo "  export SUBSCRIPTION_ID=\"<your-subscription-id>\"" >&2
-    echo "  export LOCATION=\"<your-location>\"" >&2
-    echo "  export ORGANIZATION=\"<your-organization>\"" >&2
-    echo "  export PROJECT=\"<your-project>\"" >&2
-    exit 1
-  fi
-}
-
-# Validate environment variables
-validate_env_vars
-
-# Get script directory and set BASE_DIR relative to infra-foundation root
+# Source common functions
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/common.sh"
+
+# Initialize script (parse args, validate env vars, set subscription)
+# Note: verify scripts don't need --dry-run, but we use init_script for consistency
+DRY_RUN=false
+init_script
+
+# Get BASE_DIR relative to infra-foundation root
 BASE_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 REPO_BASE="$(cd "$BASE_DIR/.." && pwd)"
 
 echo "=== Phase 0 Verification ==="
-echo "Script directory: $SCRIPT_DIR"
-echo "Repository base: $BASE_DIR"
-echo "Workspace base: $REPO_BASE"
+log_info "Script directory: $SCRIPT_DIR"
+log_info "Repository base: $BASE_DIR"
+log_info "Workspace base: $REPO_BASE"
 echo ""
 
 ERRORS=0
@@ -60,10 +24,10 @@ ERRORS=0
 # Check Azure CLI authentication
 echo "1. Checking Azure CLI authentication..."
 if az account show --output none 2>/dev/null; then
-  echo "   ✓ Azure CLI authenticated"
+  log_success "Azure CLI authenticated"
 else
-  echo "   ✗ Azure CLI not authenticated"
-  ((ERRORS++))
+  log_error "Azure CLI not authenticated"
+  ERRORS=$((ERRORS + 1))
 fi
 
 # Check Resource Groups
@@ -72,10 +36,10 @@ echo "2. Checking Resource Groups..."
 for ENV in dev test stage prod; do
   RG_NAME="rg-${PROJECT}-${ENV}"
   if az group show --name "$RG_NAME" --output none 2>/dev/null; then
-    echo "   ✓ $RG_NAME exists"
+    log_success "$RG_NAME exists"
   else
-    echo "   ✗ $RG_NAME missing"
-    ((ERRORS++))
+    log_error "$RG_NAME missing"
+    ERRORS=$((ERRORS + 1))
   fi
 done
 
@@ -83,22 +47,22 @@ done
 echo ""
 echo "3. Checking Terraform State Storage Accounts..."
 for ENV in dev test stage prod; do
-  SA_NAME="tfstate${ORGANIZATION}${PROJECT}${ENV}"
+  SA_NAME="tfstate${ORGANIZATION_FOR_SA}${PROJECT}${ENV}"
   RG_NAME="rg-${PROJECT}-${ENV}"
   
   if az storage account show --name "$SA_NAME" --resource-group "$RG_NAME" --output none 2>/dev/null; then
-    echo "   ✓ $SA_NAME exists"
+    log_success "$SA_NAME exists"
     
     # Check container
     if az storage container show --name tfstate --account-name "$SA_NAME" --auth-mode login --output none 2>/dev/null; then
-      echo "     ✓ Container 'tfstate' exists"
+      log_success "Container 'tfstate' exists"
     else
-      echo "     ✗ Container 'tfstate' missing"
-      ((ERRORS++))
+      log_error "Container 'tfstate' missing"
+      ERRORS=$((ERRORS + 1))
     fi
   else
-    echo "   ✗ $SA_NAME missing"
-    ((ERRORS++))
+    log_error "$SA_NAME missing"
+    ERRORS=$((ERRORS + 1))
   fi
 done
 
@@ -108,10 +72,10 @@ echo "4. Checking Service Principals..."
 for ENV in dev test stage prod; do
   SP_NAME="sp-gha-${PROJECT}-${ENV}"
   if az ad sp list --filter "displayName eq '${SP_NAME}'" --query "[0].displayName" --output tsv 2>/dev/null | grep -q "$SP_NAME"; then
-    echo "   ✓ $SP_NAME exists"
+    log_success "$SP_NAME exists"
   else
-    echo "   ✗ $SP_NAME missing"
-    ((ERRORS++))
+    log_error "$SP_NAME missing"
+    ERRORS=$((ERRORS + 1))
   fi
 done
 
@@ -126,10 +90,10 @@ for REPO in infra-foundation infra-platform infra-workload-identity; do
       BACKEND_FILE="${REPO_BASE}/${REPO}/terraform/environments/${ENV}/backend.tf"
     fi
     if [ -f "$BACKEND_FILE" ]; then
-      echo "   ✓ ${REPO}/${ENV}/backend.tf exists"
+      log_success "${REPO}/${ENV}/backend.tf exists"
     else
-      echo "   ✗ ${REPO}/${ENV}/backend.tf missing"
-      ((ERRORS++))
+      log_error "${REPO}/${ENV}/backend.tf missing"
+      ERRORS=$((ERRORS + 1))
     fi
   done
 done
@@ -138,18 +102,18 @@ done
 echo ""
 echo "6. Checking GitHub repositories..."
 if [ -d "$BASE_DIR" ] && [ -d "$BASE_DIR/terraform" ]; then
-  echo "   ✓ infra-foundation cloned locally"
+  log_success "infra-foundation cloned locally"
 else
-  echo "   ✗ infra-foundation not found locally"
-  ((ERRORS++))
+  log_error "infra-foundation not found locally"
+  ERRORS=$((ERRORS + 1))
 fi
 
 for REPO in infra-platform infra-workload-identity; do
   if [ -d "${REPO_BASE}/${REPO}" ]; then
-    echo "   ✓ ${REPO} cloned locally"
+    log_success "${REPO} cloned locally"
   else
-    echo "   ✗ ${REPO} not found locally"
-    ((ERRORS++))
+    log_error "${REPO} not found locally"
+    ERRORS=$((ERRORS + 1))
   fi
 done
 
@@ -157,9 +121,9 @@ done
 echo ""
 echo "=== Verification Summary ==="
 if [ $ERRORS -eq 0 ]; then
-  echo "✓ All checks passed! Ready for Phase 1."
+  log_success "All checks passed! Ready for Phase 1."
   exit 0
 else
-  echo "✗ Found $ERRORS error(s). Please fix before proceeding to Phase 1."
+  log_error "Found $ERRORS error(s). Please fix before proceeding to Phase 1."
   exit 1
 fi

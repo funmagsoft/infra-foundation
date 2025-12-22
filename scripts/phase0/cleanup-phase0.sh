@@ -1,55 +1,20 @@
 #!/bin/bash
-set -e
 
-# Validate required environment variables
-validate_env_vars() {
-  local missing_vars=()
-  
-  if [ -z "$TENANT_ID" ]; then
-    missing_vars+=("TENANT_ID")
-  fi
-  
-  if [ -z "$SUBSCRIPTION_ID" ]; then
-    missing_vars+=("SUBSCRIPTION_ID")
-  fi
-  
-  if [ -z "$LOCATION" ]; then
-    missing_vars+=("LOCATION")
-  fi
-  
-  if [ -z "$ORGANIZATION" ]; then
-    missing_vars+=("ORGANIZATION")
-  fi
-  
-  if [ -z "$PROJECT" ]; then
-    missing_vars+=("PROJECT")
-  fi
-  
-  if [ ${#missing_vars[@]} -ne 0 ]; then
-    echo "Error: The following required environment variables are not set:" >&2
-    for var in "${missing_vars[@]}"; do
-      echo "  - $var" >&2
-    done
-    echo "" >&2
-    echo "Please set them before running this script:" >&2
-    echo "  export TENANT_ID=\"<your-tenant-id>\"" >&2
-    echo "  export SUBSCRIPTION_ID=\"<your-subscription-id>\"" >&2
-    echo "  export LOCATION=\"<your-location>\"" >&2
-    echo "  export ORGANIZATION=\"<your-organization>\"" >&2
-    echo "  export PROJECT=\"<your-project>\"" >&2
-    exit 1
-  fi
-}
+# Source common functions
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/common.sh"
 
-# Validate environment variables
-validate_env_vars
+# Initialize script (parse args, validate env vars, set subscription)
+# Note: cleanup script doesn't need --dry-run, but we use init_script for consistency
+DRY_RUN=false
+init_script
 
 echo "=== Phase 0 Complete Cleanup ==="
-echo "WARNING: This will delete ALL resources created in Phase 0!"
+log_warning "This will delete ALL resources created in Phase 0!"
 read -p "Are you sure you want to continue? (yes/no): " CONFIRM
 
 if [ "$CONFIRM" != "yes" ]; then
-  echo "Aborted."
+  log_info "Aborted."
   exit 1
 fi
 
@@ -65,9 +30,9 @@ for ENV in dev test stage prod; do
   if [ -n "$APP_ID" ] && [ "$APP_ID" != "null" ] && [ "$APP_ID" != "" ]; then
     echo "Deleting ${SP_NAME} (${APP_ID})..."
     az ad sp delete --id "$APP_ID" 2>/dev/null || true
-    echo "✓ Deleted ${SP_NAME}"
+    log_success "Deleted ${SP_NAME}"
   else
-    echo "✗ ${SP_NAME} not found"
+    log_error "${SP_NAME} not found"
   fi
 done
 
@@ -80,9 +45,9 @@ for ENV in dev test stage prod; do
   if az group show --name "$RG_NAME" --output none 2>/dev/null; then
     echo "Deleting ${RG_NAME}..."
     az group delete --name "$RG_NAME" --yes --no-wait
-    echo "✓ Deletion initiated for ${RG_NAME}"
+    log_success "Deletion initiated for ${RG_NAME}"
   else
-    echo "✗ ${RG_NAME} not found"
+    log_error "${RG_NAME} not found"
   fi
 done
 

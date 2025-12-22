@@ -156,6 +156,22 @@ resource "azurerm_network_security_rule" "mgmt_allow_vnet_inbound" {
   network_security_group_name = azurerm_network_security_group.mgmt.name
 }
 
+# Allow SSH from specified IPs to mgmt subnet (if configured)
+resource "azurerm_network_security_rule" "mgmt_allow_ssh_inbound" {
+  count                       = length(var.mgmt_subnet_allowed_ssh_ips) > 0 ? 1 : 0
+  name                        = "AllowSSHInbound"
+  priority                    = 200
+  direction                   = "Inbound"
+  access                      = "Allow"
+  protocol                    = "Tcp"
+  source_port_range           = "*"
+  destination_port_range      = "22"
+  source_address_prefixes     = var.mgmt_subnet_allowed_ssh_ips
+  destination_address_prefix  = "*"
+  resource_group_name         = var.resource_group_name
+  network_security_group_name = azurerm_network_security_group.mgmt.name
+}
+
 resource "azurerm_network_security_rule" "mgmt_deny_all_inbound" {
   name                        = "DenyAllInbound"
   priority                    = 4000

@@ -74,6 +74,12 @@ variable "enable_vpn_gateway" {
   default     = false
 }
 
+variable "mgmt_subnet_allowed_ssh_ips" {
+  description = "List of allowed source IP addresses/CIDR blocks for SSH access to mgmt subnet. If empty, SSH from internet is blocked."
+  type        = list(string)
+  default     = []
+}
+
 variable "tags" {
   description = "Tags to apply to resources"
   type        = map(string)

@@ -59,3 +59,9 @@ variable "vpn_root_cert_data" {
   sensitive   = true
 }
 
+variable "mgmt_subnet_allowed_ssh_ips" {
+  description = "List of allowed source IP addresses/CIDR blocks for SSH access to mgmt subnet"
+  type        = list(string)
+  default     = []
+}
+

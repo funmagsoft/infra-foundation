@@ -19,6 +19,8 @@ module "network" {
   mgmt_subnet_cidr = var.mgmt_subnet_cidr
   mgmt_nsg_name    = "nsg-${local.project}-${local.environment}-mgmt"
 
+  mgmt_subnet_allowed_ssh_ips = var.mgmt_subnet_allowed_ssh_ips
+
   gateway_subnet_cidr = var.gateway_subnet_cidr
   enable_vpn_gateway  = var.enable_vpn_gateway
 

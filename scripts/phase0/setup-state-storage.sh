@@ -4,7 +4,7 @@ set -e
 # Configuration
 SUBSCRIPTION_ID="${SUBSCRIPTION_ID:-<your-subscription-id>}"
 LOCATION="${LOCATION:-polandcentral}"
-ORG="fms"
+ORG="hycom"
 PROJ="ecare"
 
 echo "=== Creating Terraform State Storage Accounts ==="

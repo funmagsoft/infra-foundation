@@ -8,7 +8,7 @@ This repository contains Terraform code for:
 
 - Virtual Networks
 - Subnets
-- Network Security Groups (NSG)
+- Network Security Groups (NSG) with SSH access rules for management subnet
 - VPN Gateway (optional)
 - Private DNS Zones
 
@@ -57,6 +57,10 @@ Before running Terraform, you must set up the foundational infrastructure using 
 3. **Verify setup**:
    - `scripts/verify-all.sh` - Verifies all resources were created correctly
 
+4. **Cleanup (if needed)**:
+   - `scripts/cleanup-all.sh` - Removes all resources created by setup scripts (RBAC, FIC, Service Principals, Storage Accounts, Resource Groups)
+   - Supports `--dry-run` option to preview what will be deleted
+
 ### Setup Scripts Description:
 
 - **`setup-rg.sh`** - Creates 4 Resource Groups (one per environment) with proper tags for Terraform management. These Resource Groups serve as containers for all infrastructure resources that Terraform will create and manage. Each Resource Group is scoped to a specific environment (dev, test, stage, prod) and is required before creating any resources within it.
@@ -99,6 +103,23 @@ Before running Terraform, you must set up the foundational infrastructure using 
 
 All setup scripts support `--dry-run` option to preview changes without executing them.
 
+### Cleanup Scripts:
+
+- **`cleanup-all.sh`** - Comprehensive cleanup script that removes all resources created by setup scripts in the correct order:
+  1. RBAC role assignments (to avoid dependency issues)
+  2. Federated Identity Credentials (FIC)
+  3. Service Principals
+  4. Storage Accounts (and all containers within them)
+  5. Resource Groups
+  6. `service-principals.env` file (if exists)
+  
+  This script is useful for:
+  - Resetting the infrastructure setup
+  - Cleaning up test environments
+  - Removing resources before recreating them
+  
+  **Warning**: This script will delete all Phase 0 infrastructure. Use with caution and always test with `--dry-run` first.
+
 ## Running Terraform
 
 After completing the Phase 0 setup, you can proceed with Terraform deployment:
@@ -109,7 +130,23 @@ After completing the Phase 0 setup, you can proceed with Terraform deployment:
 cd terraform/environments/dev  # or test, stage, prod
 ```
 
-### 2. Initialize Terraform
+### 2. Configure Terraform variables
+
+Copy the example variables file and customize it:
+
+```bash
+cp terraform.tfvars.example terraform.tfvars
+```
+
+Edit `terraform.tfvars` and configure:
+- `resource_group_name` - Resource Group name (e.g., "rg-ecare-dev")
+- Network CIDR blocks for VNet and subnets
+- `mgmt_subnet_allowed_ssh_ips` - List of IP addresses/CIDR blocks allowed for SSH access to management subnet (e.g., `["91.150.222.105"]`)
+- VPN Gateway settings (if needed)
+
+**Important**: `terraform.tfvars` is in `.gitignore` and should not be committed. Use `terraform.tfvars.example` as a template.
+
+### 3. Initialize Terraform
 
 ```bash
 terraform init
@@ -120,7 +157,7 @@ This will:
 - Configure the backend to use the Storage Account created in Phase 0
 - Set up authentication using Azure AD (no credentials needed if logged in via `az login`)
 
-### 3. Review the execution plan
+### 4. Review the execution plan
 
 ```bash
 terraform plan
@@ -128,7 +165,7 @@ terraform plan
 
 This shows what resources Terraform will create, modify, or destroy without making any changes.
 
-### 4. Apply the configuration
+### 5. Apply the configuration
 
 ```bash
 terraform apply
@@ -136,12 +173,32 @@ terraform apply
 
 This will create the infrastructure resources defined in your Terraform configuration. Terraform will prompt for confirmation before making changes.
 
-### 5. Verify deployment
+### 6. Verify deployment
 
 After successful deployment, you can verify the resources:
 - Use `scripts/verify-all.sh` to verify all Phase 0 resources
 - Check Azure Portal for created resources
 - Review Terraform outputs: `terraform output`
+
+## Network Security Configuration
+
+### Management Subnet SSH Access
+
+The management subnet (mgmt) is used for bastion hosts and other management VMs. By default, SSH access from the internet is blocked by NSG rules. To allow SSH access from specific IP addresses:
+
+1. Configure `mgmt_subnet_allowed_ssh_ips` in `terraform.tfvars`:
+   ```hcl
+   mgmt_subnet_allowed_ssh_ips = ["91.150.222.105", "203.0.113.0/24"]
+   ```
+
+2. Apply the Terraform configuration:
+   ```bash
+   terraform apply
+   ```
+
+This will create an NSG rule `AllowSSHInbound` (priority 200) that allows SSH (port 22) from the specified IP addresses/CIDR blocks. If the list is empty, SSH from the internet remains blocked.
+
+**Security Note**: Always restrict SSH access to trusted IP addresses. For production environments, consider using VPN Gateway or Azure Bastion service instead of direct SSH access.
 
 ### Important Notes:
 

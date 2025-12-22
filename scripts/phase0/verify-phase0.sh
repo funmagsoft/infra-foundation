@@ -1,7 +1,49 @@
 #!/bin/bash
 set -e
 
-SUBSCRIPTION_ID="${SUBSCRIPTION_ID:-<your-subscription-id>}"
+# Validate required environment variables
+validate_env_vars() {
+  local missing_vars=()
+  
+  if [ -z "$TENANT_ID" ]; then
+    missing_vars+=("TENANT_ID")
+  fi
+  
+  if [ -z "$SUBSCRIPTION_ID" ]; then
+    missing_vars+=("SUBSCRIPTION_ID")
+  fi
+  
+  if [ -z "$LOCATION" ]; then
+    missing_vars+=("LOCATION")
+  fi
+  
+  if [ -z "$ORGANIZATION" ]; then
+    missing_vars+=("ORGANIZATION")
+  fi
+  
+  if [ -z "$PROJECT" ]; then
+    missing_vars+=("PROJECT")
+  fi
+  
+  if [ ${#missing_vars[@]} -ne 0 ]; then
+    echo "Error: The following required environment variables are not set:" >&2
+    for var in "${missing_vars[@]}"; do
+      echo "  - $var" >&2
+    done
+    echo "" >&2
+    echo "Please set them before running this script:" >&2
+    echo "  export TENANT_ID=\"<your-tenant-id>\"" >&2
+    echo "  export SUBSCRIPTION_ID=\"<your-subscription-id>\"" >&2
+    echo "  export LOCATION=\"<your-location>\"" >&2
+    echo "  export ORGANIZATION=\"<your-organization>\"" >&2
+    echo "  export PROJECT=\"<your-project>\"" >&2
+    exit 1
+  fi
+}
+
+# Validate environment variables
+validate_env_vars
+
 # Get script directory and set BASE_DIR relative to infra-foundation root
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BASE_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
@@ -28,7 +70,7 @@ fi
 echo ""
 echo "2. Checking Resource Groups..."
 for ENV in dev test stage prod; do
-  RG_NAME="rg-ecare-${ENV}"
+  RG_NAME="rg-${PROJECT}-${ENV}"
   if az group show --name "$RG_NAME" --output none 2>/dev/null; then
     echo "   ✓ $RG_NAME exists"
   else
@@ -41,8 +83,8 @@ done
 echo ""
 echo "3. Checking Terraform State Storage Accounts..."
 for ENV in dev test stage prod; do
-  SA_NAME="tfstatefmsecare${ENV}"
-  RG_NAME="rg-ecare-${ENV}"
+  SA_NAME="tfstate${ORGANIZATION}${PROJECT}${ENV}"
+  RG_NAME="rg-${PROJECT}-${ENV}"
   
   if az storage account show --name "$SA_NAME" --resource-group "$RG_NAME" --output none 2>/dev/null; then
     echo "   ✓ $SA_NAME exists"
@@ -64,7 +106,7 @@ done
 echo ""
 echo "4. Checking Service Principals..."
 for ENV in dev test stage prod; do
-  SP_NAME="sp-gha-ecare-${ENV}"
+  SP_NAME="sp-gha-${PROJECT}-${ENV}"
   if az ad sp list --filter "displayName eq '${SP_NAME}'" --query "[0].displayName" --output tsv 2>/dev/null | grep -q "$SP_NAME"; then
     echo "   ✓ $SP_NAME exists"
   else

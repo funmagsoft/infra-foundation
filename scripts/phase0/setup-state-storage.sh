@@ -1,11 +1,52 @@
 #!/bin/bash
 set -e
 
+# Validate required environment variables
+validate_env_vars() {
+  local missing_vars=()
+  
+  if [ -z "$TENANT_ID" ]; then
+    missing_vars+=("TENANT_ID")
+  fi
+  
+  if [ -z "$SUBSCRIPTION_ID" ]; then
+    missing_vars+=("SUBSCRIPTION_ID")
+  fi
+  
+  if [ -z "$LOCATION" ]; then
+    missing_vars+=("LOCATION")
+  fi
+  
+  if [ -z "$ORGANIZATION" ]; then
+    missing_vars+=("ORGANIZATION")
+  fi
+  
+  if [ -z "$PROJECT" ]; then
+    missing_vars+=("PROJECT")
+  fi
+  
+  if [ ${#missing_vars[@]} -ne 0 ]; then
+    echo "Error: The following required environment variables are not set:" >&2
+    for var in "${missing_vars[@]}"; do
+      echo "  - $var" >&2
+    done
+    echo "" >&2
+    echo "Please set them before running this script:" >&2
+    echo "  export TENANT_ID=\"<your-tenant-id>\"" >&2
+    echo "  export SUBSCRIPTION_ID=\"<your-subscription-id>\"" >&2
+    echo "  export LOCATION=\"<your-location>\"" >&2
+    echo "  export ORGANIZATION=\"<your-organization>\"" >&2
+    echo "  export PROJECT=\"<your-project>\"" >&2
+    exit 1
+  fi
+}
+
+# Validate environment variables
+validate_env_vars
+
 # Configuration
-SUBSCRIPTION_ID="${SUBSCRIPTION_ID:-<your-subscription-id>}"
-LOCATION="${LOCATION:-polandcentral}"
-ORG="hycom"
-PROJ="ecare"
+ORG="$ORGANIZATION"
+PROJ="$PROJECT"
 
 echo "=== Creating Terraform State Storage Accounts ==="
 echo "Subscription: $SUBSCRIPTION_ID"
@@ -17,7 +58,7 @@ az account set --subscription "$SUBSCRIPTION_ID"
 
 # Create Storage Accounts for all environments
 for ENV in dev test stage prod; do
-  RG_NAME="rg-ecare-${ENV}"
+  RG_NAME="rg-${PROJ}-${ENV}"
   SA_NAME="tfstate${ORG}${PROJ}${ENV}"
 
   echo "--- Creating Storage Account for ${ENV} environment ---"
@@ -44,7 +85,7 @@ for ENV in dev test stage prod; do
     --allow-shared-key-access false \
     --tags \
       Environment="${ENV}" \
-      Project="ecare" \
+      Project="${PROJ}" \
       ManagedBy="terraform" \
       Purpose="terraform-state" \
       CreatedDate="$(date +%Y-%m-%d)" \

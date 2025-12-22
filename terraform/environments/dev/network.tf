@@ -7,9 +7,9 @@ module "network" {
   vnet_name = "vnet-${local.project}-${local.environment}"
   vnet_cidr = var.vnet_cidr
 
-  aks_subnet_name  = "snet-${local.project}-${local.environment}-aks"
-  aks_subnet_cidr  = var.aks_subnet_cidr
-  aks_nsg_name     = "nsg-${local.project}-${local.environment}-aks"
+  aks_subnet_name = "snet-${local.project}-${local.environment}-aks"
+  aks_subnet_cidr = var.aks_subnet_cidr
+  aks_nsg_name    = "nsg-${local.project}-${local.environment}-aks"
 
   data_subnet_name = "snet-${local.project}-${local.environment}-data"
   data_subnet_cidr = var.data_subnet_cidr

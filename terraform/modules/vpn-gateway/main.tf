@@ -27,11 +27,11 @@ resource "azurerm_virtual_network_gateway" "vpn" {
   }
 
   vpn_client_configuration {
-    address_space = [var.vpn_client_address_space]
+    address_space        = [var.vpn_client_address_space]
     vpn_client_protocols = ["OpenVPN"]
-    
+
     root_certificate {
-      name = var.vpn_root_cert_name
+      name             = var.vpn_root_cert_name
       public_cert_data = var.vpn_root_cert_data
     }
   }

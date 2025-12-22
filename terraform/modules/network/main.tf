@@ -39,7 +39,7 @@ resource "azurerm_subnet" "mgmt" {
 # Gateway Subnet (for VPN Gateway)
 resource "azurerm_subnet" "gateway" {
   count                = var.enable_vpn_gateway ? 1 : 0
-  name                 = "GatewaySubnet"  # Fixed name required by Azure
+  name                 = "GatewaySubnet" # Fixed name required by Azure
   resource_group_name  = var.resource_group_name
   virtual_network_name = azurerm_virtual_network.main.name
   address_prefixes     = [var.gateway_subnet_cidr]

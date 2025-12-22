@@ -9,10 +9,10 @@ module "vpn_gateway" {
   public_ip_name    = "pip-vgw-${local.project}-${local.environment}"
   gateway_subnet_id = module.network.gateway_subnet_id
 
-  vpn_gateway_sku           = var.vpn_gateway_sku
-  vpn_client_address_space  = var.vpn_client_address_space
-  vpn_root_cert_name        = var.vpn_root_cert_name
-  vpn_root_cert_data        = var.vpn_root_cert_data
+  vpn_gateway_sku          = var.vpn_gateway_sku
+  vpn_client_address_space = var.vpn_client_address_space
+  vpn_root_cert_name       = var.vpn_root_cert_name
+  vpn_root_cert_data       = var.vpn_root_cert_data
 
   tags = local.common_tags
 

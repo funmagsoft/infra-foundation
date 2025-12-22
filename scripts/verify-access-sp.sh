@@ -139,4 +139,3 @@ else
   echo "  - Storage Blob Data Contributor role assigned: ${GRANTED}/${TOTAL} Service Principals"
   exit 1
 fi
-

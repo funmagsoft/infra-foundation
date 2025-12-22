@@ -239,4 +239,3 @@ if [ "$DRY_RUN" != true ]; then
 else
   echo "Service Principal IDs would be saved to: ${SP_IDS_FILE}"
 fi
-

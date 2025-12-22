@@ -101,4 +101,3 @@ fi
 
 echo ""
 log_info "You can now view containers and blobs in Azure Portal for all State Storage Accounts."
-

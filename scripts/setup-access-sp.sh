@@ -108,4 +108,3 @@ fi
 
 echo ""
 log_info "Service Principals can now access Terraform state files in their respective Storage Accounts."
-

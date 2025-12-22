@@ -105,4 +105,3 @@ log_info "Next steps:"
 log_info "  1. Verify service-principals.env file contains all Service Principal IDs"
 log_info "  2. Load the file: source <(grep -v '^#' service-principals.env | xargs -I {} echo 'export {}')"
 log_info "  3. Or use load_env_file from common.sh: load_env_file service-principals.env"
-

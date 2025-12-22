@@ -2,6 +2,39 @@
 # Common functions and utilities for phase0 scripts
 
 # ============================================================================
+# Load global project configuration
+# ============================================================================
+# Load project constants from globals.sh (ORGANIZATION, ORGANIZATION_FOR_SA, PROJECT)
+# These are project-specific and should not change per deployment
+if [ -f "$(dirname "${BASH_SOURCE[0]}")/globals.sh" ]; then
+  source "$(dirname "${BASH_SOURCE[0]}")/globals.sh"
+fi
+
+# ============================================================================
+# Load environment-specific configuration from .env
+# ============================================================================
+load_dotenv() {
+  # Find .env file in the repository root (infra-foundation directory)
+  # SCRIPT_DIR should be set by the calling script before sourcing common.sh
+  local script_dir="${SCRIPT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
+  
+  # Go up two levels from scripts/ to repo root
+  local repo_root="$(cd "$script_dir/../.." && pwd)"
+  local env_file="$repo_root/.env"
+  
+  if [ -f "$env_file" ]; then
+    # Load .env file (skip comments and empty lines, handle both with and without export)
+    set -a
+    # Remove comments, empty lines, and optional 'export' keyword
+    source <(grep -v '^#' "$env_file" | grep -v '^$' | sed -E 's/^export[[:space:]]+//')
+    set +a
+    return 0
+  else
+    return 1
+  fi
+}
+
+# ============================================================================
 # Command line argument parsing
 # ============================================================================
 parse_dry_run() {
@@ -66,6 +99,7 @@ clear_file() {
 validate_env_vars() {
   local missing_vars=()
   
+  # Environment-specific variables (loaded from .env)
   if [ -z "$TENANT_ID" ]; then
     missing_vars+=("TENANT_ID")
   fi
@@ -78,6 +112,7 @@ validate_env_vars() {
     missing_vars+=("LOCATION")
   fi
   
+  # Project constants (loaded from globals.sh)
   if [ -z "$ORGANIZATION" ]; then
     missing_vars+=("ORGANIZATION")
   fi
@@ -91,18 +126,45 @@ validate_env_vars() {
   fi
   
   if [ ${#missing_vars[@]} -ne 0 ]; then
-    log_error "The following required environment variables are not set:"
+    log_error "The following required variables are not set:"
     for var in "${missing_vars[@]}"; do
       echo "  - $var" >&2
     done
     echo "" >&2
-    echo "Please set them before running this script:" >&2
-    echo "  export TENANT_ID=\"<your-tenant-id>\"" >&2
-    echo "  export SUBSCRIPTION_ID=\"<your-subscription-id>\"" >&2
-    echo "  export LOCATION=\"<your-location>\"" >&2
-    echo "  export ORGANIZATION=\"<your-organization>\"" >&2
-    echo "  export ORGANIZATION_FOR_SA=\"<your-organization-for-sa>\"" >&2
-    echo "  export PROJECT=\"<your-project>\"" >&2
+    
+    # Check which variables are environment-specific vs project constants
+    local env_vars=()
+    local project_vars=()
+    
+    for var in "${missing_vars[@]}"; do
+      case $var in
+        TENANT_ID|SUBSCRIPTION_ID|LOCATION)
+          env_vars+=("$var")
+          ;;
+        ORGANIZATION|ORGANIZATION_FOR_SA|PROJECT)
+          project_vars+=("$var")
+          ;;
+      esac
+    done
+    
+    if [ ${#env_vars[@]} -ne 0 ]; then
+      echo "Environment variables (should be in .env file):" >&2
+      for var in "${env_vars[@]}"; do
+        echo "  $var=\"<your-$var>\"" >&2
+      done
+      echo "" >&2
+      echo "Please add them to .env file in the repository root." >&2
+    fi
+    
+    if [ ${#project_vars[@]} -ne 0 ]; then
+      echo "Project constants (should be in scripts/globals.sh):" >&2
+      for var in "${project_vars[@]}"; do
+        echo "  $var=\"<your-$var>\"" >&2
+      done
+      echo "" >&2
+      echo "Please add them to scripts/globals.sh file." >&2
+    fi
+    
     exit 1
   fi
 }
@@ -110,23 +172,37 @@ validate_env_vars() {
 validate_minimal_env_vars() {
   local missing_vars=()
   
+  # Environment-specific variables (loaded from .env)
   if [ -z "$SUBSCRIPTION_ID" ]; then
     missing_vars+=("SUBSCRIPTION_ID")
   fi
   
+  # Project constants (loaded from globals.sh)
   if [ -z "$PROJECT" ]; then
     missing_vars+=("PROJECT")
   fi
   
   if [ ${#missing_vars[@]} -ne 0 ]; then
-    log_error "The following required environment variables are not set:"
+    log_error "The following required variables are not set:"
     for var in "${missing_vars[@]}"; do
       echo "  - $var" >&2
     done
     echo "" >&2
-    echo "Please set them before running this script:" >&2
-    echo "  export SUBSCRIPTION_ID=\"<your-subscription-id>\"" >&2
-    echo "  export PROJECT=\"<your-project>\"" >&2
+    
+    if [[ " ${missing_vars[@]} " =~ " SUBSCRIPTION_ID " ]]; then
+      echo "Environment variable (should be in .env file):" >&2
+      echo "  SUBSCRIPTION_ID=\"<your-subscription-id>\"" >&2
+      echo "" >&2
+      echo "Please add it to .env file in the repository root." >&2
+    fi
+    
+    if [[ " ${missing_vars[@]} " =~ " PROJECT " ]]; then
+      echo "Project constant (should be in scripts/globals.sh):" >&2
+      echo "  PROJECT=\"<your-project>\"" >&2
+      echo "" >&2
+      echo "Please add it to scripts/globals.sh file." >&2
+    fi
+    
     exit 1
   fi
 }
@@ -167,6 +243,9 @@ log_dry_run_complete() {
 # Script initialization
 # ============================================================================
 init_script() {
+  # Load environment-specific variables from .env
+  load_dotenv
+  
   # Parse dry-run argument
   parse_dry_run "$@"
   
@@ -183,6 +262,9 @@ init_script() {
 }
 
 init_script_minimal() {
+  # Load environment-specific variables from .env
+  load_dotenv
+  
   # Parse dry-run argument
   parse_dry_run "$@"
   
@@ -227,10 +309,11 @@ load_env_file() {
   if [ -f "$env_file" ]; then
     # Use set -a to automatically export all variables
     set -a
-    source "$env_file"
+    # Remove comments, empty lines, and optional 'export' keyword
+    source <(grep -v '^#' "$env_file" | grep -v '^$' | sed -E 's/^export[[:space:]]+//')
     set +a
+    return 0
   else
     return 1
   fi
 }
-

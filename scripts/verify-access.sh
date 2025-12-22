@@ -248,4 +248,3 @@ else
   log_error "Verification failed with ${ERRORS} error(s) and ${WARNINGS} warning(s)"
   exit 1
 fi
-

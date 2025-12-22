@@ -112,4 +112,3 @@ else
   echo "  - Storage Blob Data Contributor role assigned: ${GRANTED}/4 Storage Accounts"
   exit 1
 fi
-

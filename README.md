@@ -29,13 +29,7 @@ terraform/
 
 ## Getting Started
 
-1. Review `docs/NAMING-CONVENTIONS.md`
-2. Review `docs/INFRASTRUCTURE-DESIGN.md`
-3. Ensure Phase 0 prerequisites are complete
-4. Navigate to environment directory: `cd terraform/environments/dev`
-5. Initialize: `terraform init`
-6. Plan: `terraform plan`
-7. Apply: `terraform apply`
+1. Review infra documentation [README.md](https://github.com/funmagsoft/infra-documentation/blob/main/README.md)
 
 ## Dependencies
 

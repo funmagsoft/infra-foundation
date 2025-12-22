@@ -32,6 +32,8 @@ resource "azurerm_private_dns_zone" "file" {
 
 # Private DNS Zone for Service Bus
 resource "azurerm_private_dns_zone" "servicebus" {
+  count = var.servicebus_sku == "Premium" ? 1 : 0
+
   name                = "privatelink.servicebus.windows.net"
   resource_group_name = var.resource_group_name
 
@@ -88,6 +90,8 @@ resource "azurerm_private_dns_zone_virtual_network_link" "file" {
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "servicebus" {
+  count = var.servicebus_sku == "Premium" ? 1 : 0
+
   name                  = "${var.vnet_name}-servicebus-link"
   resource_group_name   = var.resource_group_name
   private_dns_zone_name = azurerm_private_dns_zone.servicebus.name

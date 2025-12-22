@@ -1,0 +1,27 @@
+# Environment Configuration for PRODUCTION
+# Copy this file to terraform.tfvars and fill in your values
+# terraform.tfvars is in .gitignore, so your sensitive data won't be committed
+# IMPORTANT: For production, consider using environment variables for sensitive data
+
+# Azure Configuration
+# subscription_id is not needed - Terraform uses active subscription from Azure CLI
+# Use 'az account set --subscription <subscription-id>' to switch subscriptions
+resource_group_name = "rg-ecare-prod"
+
+# Network Configuration
+vnet_cidr           = "10.4.0.0/16"
+aks_subnet_cidr     = "10.4.1.0/24"
+data_subnet_cidr    = "10.4.2.0/24"
+mgmt_subnet_cidr    = "10.4.3.0/24"
+gateway_subnet_cidr = "10.4.4.0/24"
+
+# VPN Configuration (set to true if VPN needed)
+# RECOMMENDED: Enable VPN for production environments
+enable_vpn_gateway  = false  # Set to true if VPN access is required
+
+# If VPN enabled, configure:
+# vpn_gateway_sku          = "VpnGw2"  # Higher SKU for production
+# vpn_client_address_space = "192.168.255.0/24"
+# vpn_root_cert_name       = "VPN-Root-Cert"
+# vpn_root_cert_data       = "<base64-encoded-cert-data>"  # Use environment variable TF_VAR_vpn_root_cert_data for production
+

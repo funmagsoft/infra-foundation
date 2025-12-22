@@ -1,0 +1,25 @@
+# Environment Configuration for TEST
+# Copy this file to terraform.tfvars and fill in your values
+# terraform.tfvars is in .gitignore, so your sensitive data won't be committed
+
+# Azure Configuration
+# subscription_id is not needed - Terraform uses active subscription from Azure CLI
+# Use 'az account set --subscription <subscription-id>' to switch subscriptions
+resource_group_name = "rg-ecare-test"
+
+# Network Configuration
+vnet_cidr           = "10.2.0.0/16"
+aks_subnet_cidr     = "10.2.1.0/24"
+data_subnet_cidr    = "10.2.2.0/24"
+mgmt_subnet_cidr    = "10.2.3.0/24"
+gateway_subnet_cidr = "10.2.4.0/24"
+
+# VPN Configuration (set to true if VPN needed)
+enable_vpn_gateway  = false
+
+# If VPN enabled, configure:
+# vpn_gateway_sku          = "VpnGw1"
+# vpn_client_address_space = "192.168.255.0/24"
+# vpn_root_cert_name       = "VPN-Root-Cert"
+# vpn_root_cert_data       = "<base64-encoded-cert-data>"
+

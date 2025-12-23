@@ -10,7 +10,6 @@ This repository contains Terraform code for:
 - Subnets
 - Network Security Groups (NSG) with SSH access rules for management subnet
 - VPN Gateway (optional)
-- Private DNS Zones
 
 ## Structure
 
@@ -18,8 +17,7 @@ This repository contains Terraform code for:
 terraform/
 ├── modules/
 │   ├── network/
-│   ├── vpn-gateway/
-│   └── private-dns/
+│   └── vpn-gateway/
 └── environments/
     ├── dev/
     ├── test/

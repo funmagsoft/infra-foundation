@@ -32,6 +32,14 @@ You are acting as a Senior DevOps Engineer and Certified Azure Solutions Archite
   - `security.tf`: Key Vault and RBAC Role Assignments.
   - `compute.tf`: AKS, VM, Container Registry.
   - `storage.tf`: Databases and Storage Accounts.
+- **Standard Environment Files:** Every environment directory (`terraform/environments/<env>/`) MUST include the following standard files (unless a file is empty and not needed):
+  - `backend.tf`: Backend configuration for remote state.
+  - `data.tf`: Data sources (remote states and resource lookups).
+  - `locals.tf`: Local variables and computed values.
+  - `outputs.tf`: Output values for cross-module integration.
+  - `providers.tf`: Terraform configuration block and provider definitions.
+  - `variables.tf`: Input variables for the environment.
+  - **Module-specific files:** Additionally, include files corresponding to modules used in that environment (e.g., `workload-identity.tf`, `network.tf`, `storage.tf`, `security.tf`, `compute.tf`, etc.).
 - **Providers:** Ensure `required_version` and `required_providers` are always pinned.
 
 ## 3. Variables and Outputs

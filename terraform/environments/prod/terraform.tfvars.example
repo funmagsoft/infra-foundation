@@ -24,4 +24,3 @@ enable_vpn_gateway  = false  # Set to true if VPN access is required
 # vpn_client_address_space = "192.168.255.0/24"
 # vpn_root_cert_name       = "VPN-Root-Cert"
 # vpn_root_cert_data       = "<base64-encoded-cert-data>"  # Use environment variable TF_VAR_vpn_root_cert_data for production
-

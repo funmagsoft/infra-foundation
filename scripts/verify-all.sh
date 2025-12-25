@@ -30,20 +30,20 @@ VERIFY_SCRIPTS=(
 # Run each verification script
 for verify_script in "${VERIFY_SCRIPTS[@]}"; do
   script_path="${SCRIPT_DIR}/${verify_script}"
-  
+
   if [ ! -f "$script_path" ]; then
     log_error "Verification script not found: $script_path"
     FAILED_VERIFICATIONS+=("$verify_script (not found)")
     TOTAL_ERRORS=$((TOTAL_ERRORS + 1))
     continue
   fi
-  
+
   echo ""
   echo "================================================================================"
   echo "Running: $verify_script"
   echo "================================================================================"
   echo ""
-  
+
   # Run the verification script and capture exit code
   if bash "$script_path"; then
     log_success "$verify_script completed successfully"
@@ -53,7 +53,7 @@ for verify_script in "${VERIFY_SCRIPTS[@]}"; do
     FAILED_VERIFICATIONS+=("$verify_script (exit code: $exit_code)")
     TOTAL_ERRORS=$((TOTAL_ERRORS + 1))
   fi
-  
+
   echo ""
 done
 
@@ -87,4 +87,3 @@ else
   echo "Please review the output above and fix the issues before proceeding."
   exit 1
 fi
-

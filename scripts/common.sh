@@ -17,11 +17,11 @@ load_dotenv() {
   # Find .env file in the repository root (infra-foundation directory)
   # SCRIPT_DIR should be set by the calling script before sourcing common.sh
   local script_dir="${SCRIPT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
-  
+
   # Go up two levels from scripts/ to repo root
   local repo_root="$(cd "$script_dir/../.." && pwd)"
   local env_file="$repo_root/.env"
-  
+
   if [ -f "$env_file" ]; then
     # Load .env file (skip comments and empty lines, handle both with and without export)
     set -a
@@ -98,20 +98,20 @@ clear_file() {
 # ============================================================================
 validate_env_vars() {
   local missing_vars=()
-  
+
   # Environment-specific variables (loaded from .env)
   if [ -z "$TENANT_ID" ]; then
     missing_vars+=("TENANT_ID")
   fi
-  
+
   if [ -z "$SUBSCRIPTION_ID" ]; then
     missing_vars+=("SUBSCRIPTION_ID")
   fi
-  
+
   if [ -z "$LOCATION" ]; then
     missing_vars+=("LOCATION")
   fi
-  
+
   # Project constants (loaded from globals.sh)
   if [ -z "$ORGANIZATION" ]; then
     missing_vars+=("ORGANIZATION")
@@ -124,18 +124,18 @@ validate_env_vars() {
   if [ -z "$PROJECT" ]; then
     missing_vars+=("PROJECT")
   fi
-  
+
   if [ ${#missing_vars[@]} -ne 0 ]; then
     log_error "The following required variables are not set:"
     for var in "${missing_vars[@]}"; do
       echo "  - $var" >&2
     done
     echo "" >&2
-    
+
     # Check which variables are environment-specific vs project constants
     local env_vars=()
     local project_vars=()
-    
+
     for var in "${missing_vars[@]}"; do
       case $var in
         TENANT_ID|SUBSCRIPTION_ID|LOCATION)
@@ -146,7 +146,7 @@ validate_env_vars() {
           ;;
       esac
     done
-    
+
     if [ ${#env_vars[@]} -ne 0 ]; then
       echo "Environment variables (should be in .env file):" >&2
       for var in "${env_vars[@]}"; do
@@ -155,7 +155,7 @@ validate_env_vars() {
       echo "" >&2
       echo "Please add them to .env file in the repository root." >&2
     fi
-    
+
     if [ ${#project_vars[@]} -ne 0 ]; then
       echo "Project constants (should be in scripts/globals.sh):" >&2
       for var in "${project_vars[@]}"; do
@@ -164,45 +164,45 @@ validate_env_vars() {
       echo "" >&2
       echo "Please add them to scripts/globals.sh file." >&2
     fi
-    
+
     exit 1
   fi
 }
 
 validate_minimal_env_vars() {
   local missing_vars=()
-  
+
   # Environment-specific variables (loaded from .env)
   if [ -z "$SUBSCRIPTION_ID" ]; then
     missing_vars+=("SUBSCRIPTION_ID")
   fi
-  
+
   # Project constants (loaded from globals.sh)
   if [ -z "$PROJECT" ]; then
     missing_vars+=("PROJECT")
   fi
-  
+
   if [ ${#missing_vars[@]} -ne 0 ]; then
     log_error "The following required variables are not set:"
     for var in "${missing_vars[@]}"; do
       echo "  - $var" >&2
     done
     echo "" >&2
-    
+
     if [[ " ${missing_vars[@]} " =~ " SUBSCRIPTION_ID " ]]; then
       echo "Environment variable (should be in .env file):" >&2
       echo "  SUBSCRIPTION_ID=\"<your-subscription-id>\"" >&2
       echo "" >&2
       echo "Please add it to .env file in the repository root." >&2
     fi
-    
+
     if [[ " ${missing_vars[@]} " =~ " PROJECT " ]]; then
       echo "Project constant (should be in scripts/globals.sh):" >&2
       echo "  PROJECT=\"<your-project>\"" >&2
       echo "" >&2
       echo "Please add it to scripts/globals.sh file." >&2
     fi
-    
+
     exit 1
   fi
 }
@@ -245,18 +245,18 @@ log_dry_run_complete() {
 init_script() {
   # Load environment-specific variables from .env
   load_dotenv
-  
+
   # Parse dry-run argument
   parse_dry_run "$@"
-  
+
   # Only set -e if not in dry-run mode
   if [ "$DRY_RUN" != true ]; then
     set -e
   fi
-  
+
   # Validate environment variables
   validate_env_vars
-  
+
   # Set active subscription
   run_cmd az account set --subscription "$SUBSCRIPTION_ID"
 }
@@ -264,18 +264,18 @@ init_script() {
 init_script_minimal() {
   # Load environment-specific variables from .env
   load_dotenv
-  
+
   # Parse dry-run argument
   parse_dry_run "$@"
-  
+
   # Only set -e if not in dry-run mode
   if [ "$DRY_RUN" != true ]; then
     set -e
   fi
-  
+
   # Validate minimal environment variables
   validate_minimal_env_vars
-  
+
   # Set active subscription
   run_cmd az account set --subscription "$SUBSCRIPTION_ID"
 }

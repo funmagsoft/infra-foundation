@@ -21,13 +21,13 @@ if [ "$DRY_RUN" = true ]; then
 else
   CURRENT_USER_EMAIL=$(az account show --query user.name --output tsv)
   CURRENT_USER_OBJECT_ID=$(az ad signed-in-user show --query id --output tsv)
-  
+
   # If signed-in-user doesn't work, try alternative method
   if [ -z "$CURRENT_USER_OBJECT_ID" ] || [ "$CURRENT_USER_OBJECT_ID" == "null" ]; then
     log_info "Trying alternative method to get Object ID from email..."
     CURRENT_USER_OBJECT_ID=$(az ad user show --id "$CURRENT_USER_EMAIL" --query id --output tsv 2>/dev/null || echo "")
   fi
-  
+
   # Verify we got a valid Object ID
   if [ -z "$CURRENT_USER_OBJECT_ID" ] || [ "$CURRENT_USER_OBJECT_ID" == "null" ]; then
     log_error "Could not find Object ID for user $CURRENT_USER_EMAIL"
@@ -49,9 +49,9 @@ GRANTED=0
 for ENV in dev test stage prod; do
   RG_NAME="rg-${PROJECT}-${ENV}"
   SA_NAME="tfstate${ORGANIZATION_FOR_SA}${PROJECT}${ENV}"
-  
+
   log_info "--- Granting access to ${SA_NAME} ---"
-  
+
   # Grant Storage Blob Data Contributor role
   if run_cmd az role assignment create \
     --assignee "$CURRENT_USER_OBJECT_ID" \
@@ -80,7 +80,7 @@ for ENV in dev test stage prod; do
       GRANTED=$((GRANTED + 1))
     fi
   fi
-  
+
   echo ""
 done
 

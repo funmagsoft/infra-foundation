@@ -60,11 +60,11 @@ for ENV in dev test stage prod; do
   ENV_UPPER=$(echo "$ENV" | tr '[:lower:]' '[:upper:]')
   APP_ID_VAR="${ENV_UPPER}_SP_APP_ID"
   SP_NAME="sp-gha-${PROJECT}-infra-${ENV}"
-  
+
   eval "APP_ID=\$$APP_ID_VAR"
-  
+
   echo "=== Verifying access for ${SP_NAME} (${ENV} environment) ==="
-  
+
   # Verify APP_ID is set
   if [ -z "$APP_ID" ]; then
     log_error "${APP_ID_VAR} not found in service-principals.env"
@@ -72,9 +72,9 @@ for ENV in dev test stage prod; do
     echo ""
     continue
   fi
-  
+
   log_info "App ID: $APP_ID"
-  
+
   # Check if Storage Account exists
   if ! az storage account show \
     --name "$SA_NAME" \
@@ -85,7 +85,7 @@ for ENV in dev test stage prod; do
     echo ""
     continue
   fi
-  
+
   # Check if Service Principal exists in Azure AD
   if ! az ad sp show --id "$APP_ID" --output none 2>/dev/null; then
     log_error "Service Principal ${SP_NAME} (App ID: ${APP_ID}) not found in Azure AD"
@@ -93,9 +93,9 @@ for ENV in dev test stage prod; do
     echo ""
     continue
   fi
-  
+
   TOTAL=$((TOTAL + 1))
-  
+
   # Check if role assignment exists
   ROLE_ASSIGNMENT=$(az role assignment list \
     --assignee "$APP_ID" \
@@ -103,7 +103,7 @@ for ENV in dev test stage prod; do
     --role "Storage Blob Data Contributor" \
     --query "[].{Principal:principalName, Role:roleDefinitionName, Scope:scope}" \
     --output table 2>/dev/null)
-  
+
   if echo "$ROLE_ASSIGNMENT" | grep -q "Storage Blob Data Contributor"; then
     log_success "Storage Blob Data Contributor role assigned on ${SA_NAME} for ${SP_NAME}"
     GRANTED=$((GRANTED + 1))
@@ -111,7 +111,7 @@ for ENV in dev test stage prod; do
     log_error "Storage Blob Data Contributor role missing on ${SA_NAME} for ${SP_NAME}"
     ERRORS=$((ERRORS + 1))
   fi
-  
+
   echo ""
 done
 

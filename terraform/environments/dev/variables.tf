@@ -64,4 +64,3 @@ variable "mgmt_subnet_allowed_ssh_ips" {
   type        = list(string)
   default     = []
 }
-

@@ -26,7 +26,7 @@ echo "=== Step 1: Deleting Service Principals ==="
 for ENV in dev test stage prod; do
   SP_NAME="sp-gha-${PROJECT}-${ENV}"
   APP_ID=$(az ad sp list --filter "displayName eq '${SP_NAME}'" --query "[0].appId" -o tsv 2>/dev/null || echo "")
-  
+
   if [ -n "$APP_ID" ] && [ "$APP_ID" != "null" ] && [ "$APP_ID" != "" ]; then
     echo "Deleting ${SP_NAME} (${APP_ID})..."
     az ad sp delete --id "$APP_ID" 2>/dev/null || true
@@ -41,7 +41,7 @@ echo ""
 echo "=== Step 2: Deleting Resource Groups ==="
 for ENV in dev test stage prod; do
   RG_NAME="rg-${PROJECT}-${ENV}"
-  
+
   if az group show --name "$RG_NAME" --output none 2>/dev/null; then
     echo "Deleting ${RG_NAME}..."
     az group delete --name "$RG_NAME" --yes --no-wait

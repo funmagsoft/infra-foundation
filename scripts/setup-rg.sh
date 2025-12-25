@@ -72,4 +72,3 @@ fi
 
 echo ""
 log_info "Resource Groups are ready for use."
-

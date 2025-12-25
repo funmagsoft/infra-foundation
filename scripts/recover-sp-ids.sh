@@ -37,9 +37,9 @@ for ENV in dev test stage prod; do
   ENV_UPPER=$(echo "$ENV" | tr '[:lower:]' '[:upper:]')
   APP_ID_VAR="${ENV_UPPER}_SP_APP_ID"
   OBJECT_ID_VAR="${ENV_UPPER}_SP_OBJECT_ID"
-  
+
   log_info "--- Recovering ${SP_NAME} ---"
-  
+
   if [ "$DRY_RUN" = true ]; then
     echo "[DRY-RUN] az ad sp list --filter \"displayName eq '${SP_NAME}'\" --query \"[0].{AppId:appId, ObjectId:id}\" --output json" >&2
     APP_ID="<app-id-would-be-retrieved>"
@@ -55,20 +55,20 @@ for ENV in dev test stage prod; do
       --filter "displayName eq '${SP_NAME}'" \
       --query "[0].{AppId:appId, ObjectId:id, DisplayName:displayName}" \
       --output json)
-    
+
     if [ "$SP_INFO" != "null" ] && [ -n "$SP_INFO" ] && [ "$SP_INFO" != "{}" ]; then
       APP_ID=$(echo "$SP_INFO" | jq -r '.AppId')
       OBJECT_ID=$(echo "$SP_INFO" | jq -r '.ObjectId')
-      
+
       # Verify we got valid IDs
       if [ -n "$APP_ID" ] && [ "$APP_ID" != "null" ] && [ -n "$OBJECT_ID" ] && [ "$OBJECT_ID" != "null" ]; then
         log_success "App ID (Client ID): $APP_ID"
         log_success "Object ID: $OBJECT_ID"
-        
+
         # Write to file
         write_file "$SP_IDS_FILE" "${APP_ID_VAR}=$APP_ID"
         write_file "$SP_IDS_FILE" "${OBJECT_ID_VAR}=$OBJECT_ID"
-        
+
         RECOVERED=$((RECOVERED + 1))
       else
         log_error "Could not retrieve valid IDs for ${SP_NAME}"
@@ -79,7 +79,7 @@ for ENV in dev test stage prod; do
       ERRORS=$((ERRORS + 1))
     fi
   fi
-  
+
   echo ""
 done
 

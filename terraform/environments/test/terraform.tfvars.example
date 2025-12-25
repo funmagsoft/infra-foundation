@@ -22,4 +22,3 @@ enable_vpn_gateway  = false
 # vpn_client_address_space = "192.168.255.0/24"
 # vpn_root_cert_name       = "VPN-Root-Cert"
 # vpn_root_cert_data       = "<base64-encoded-cert-data>"
-

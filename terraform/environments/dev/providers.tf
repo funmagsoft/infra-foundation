@@ -15,4 +15,3 @@ provider "azurerm" {
   # subscription_id is not set - Terraform will use the active subscription from Azure CLI
   # Use 'az account set --subscription <subscription-id>' to switch subscriptions
 }
-

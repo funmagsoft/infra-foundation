@@ -62,15 +62,15 @@ for ENV in dev test stage prod; do
   ENV_UPPER=$(echo "$ENV" | tr '[:lower:]' '[:upper:]')
   APP_ID_VAR="${ENV_UPPER}_SP_APP_ID"
   OBJECT_ID_VAR="${ENV_UPPER}_SP_OBJECT_ID"
-  
+
   eval "APP_ID=\$$APP_ID_VAR"
   eval "OBJECT_ID=\$$OBJECT_ID_VAR"
-  
+
   RG_NAME="rg-${PROJECT}-${ENV}"
   SA_NAME="tfstate${ORGANIZATION_FOR_SA}${PROJECT}${ENV}"
-  
+
   echo "=== Verifying ${SP_NAME} (${ENV} environment) ==="
-  
+
   # Check if APP_ID is set in environment
   if [ -z "$APP_ID" ]; then
     log_error "${APP_ID_VAR} not found in service-principals.env"
@@ -78,26 +78,26 @@ for ENV in dev test stage prod; do
     echo ""
     continue
   fi
-  
+
   if [ -z "$OBJECT_ID" ]; then
     log_error "${OBJECT_ID_VAR} not found in service-principals.env"
     ERRORS=$((ERRORS + 1))
     echo ""
     continue
   fi
-  
+
   log_info "App ID from file: $APP_ID"
   log_info "Object ID from file: $OBJECT_ID"
-  
+
   # Verify Service Principal exists in Azure AD
   echo "  Checking Service Principal exists..."
   SP_CHECK=$(az ad sp show --id "$APP_ID" --query "{appId:appId, displayName:displayName, id:id}" --output json 2>/dev/null)
-  
+
   if [ $? -eq 0 ] && [ -n "$SP_CHECK" ]; then
     ACTUAL_APP_ID=$(echo "$SP_CHECK" | jq -r '.appId')
     ACTUAL_DISPLAY_NAME=$(echo "$SP_CHECK" | jq -r '.displayName')
     ACTUAL_OBJECT_ID=$(echo "$SP_CHECK" | jq -r '.id')
-    
+
     # Verify App ID matches
     if [ "$ACTUAL_APP_ID" == "$APP_ID" ]; then
       log_success "Service Principal exists (App ID matches)"
@@ -105,7 +105,7 @@ for ENV in dev test stage prod; do
       log_error "Service Principal App ID mismatch: expected $APP_ID, got $ACTUAL_APP_ID"
       ERRORS=$((ERRORS + 1))
     fi
-    
+
     # Verify Display Name matches expected
     if [ "$ACTUAL_DISPLAY_NAME" == "$SP_NAME" ]; then
       log_success "Service Principal name matches: $ACTUAL_DISPLAY_NAME"
@@ -113,7 +113,7 @@ for ENV in dev test stage prod; do
       log_warning "Service Principal name mismatch: expected $SP_NAME, got $ACTUAL_DISPLAY_NAME"
       WARNINGS=$((WARNINGS + 1))
     fi
-    
+
     # Verify Object ID matches
     if [ "$ACTUAL_OBJECT_ID" == "$OBJECT_ID" ]; then
       log_success "Object ID matches"
@@ -127,12 +127,12 @@ for ENV in dev test stage prod; do
     echo ""
     continue
   fi
-  
+
   # Verify Federated Identity Credentials
   echo "  Checking Federated Identity Credentials..."
   FIC_COUNT=0
   FIC_EXPECTED=3
-  
+
   # Check FIC for infra-foundation
   FIC_NAME_FOUNDATION="GitHubInfraFoundationEnv-${ENV}"
   if az ad app federated-credential list --id "$APP_ID" --query "[?name=='${FIC_NAME_FOUNDATION}']" --output json 2>/dev/null | jq -e 'length > 0' >/dev/null 2>&1; then
@@ -142,7 +142,7 @@ for ENV in dev test stage prod; do
     log_error "FIC missing: ${FIC_NAME_FOUNDATION}"
     ERRORS=$((ERRORS + 1))
   fi
-  
+
   # Check FIC for infra-platform
   FIC_NAME_PLATFORM="GitHubInfraPlatformEnv-${ENV}"
   if az ad app federated-credential list --id "$APP_ID" --query "[?name=='${FIC_NAME_PLATFORM}']" --output json 2>/dev/null | jq -e 'length > 0' >/dev/null 2>&1; then
@@ -152,7 +152,7 @@ for ENV in dev test stage prod; do
     log_error "FIC missing: ${FIC_NAME_PLATFORM}"
     ERRORS=$((ERRORS + 1))
   fi
-  
+
   # Check FIC for infra-workload-identity
   FIC_NAME_WORKLOAD="GitHubInfraWorkloadIdentityEnv-${ENV}"
   if az ad app federated-credential list --id "$APP_ID" --query "[?name=='${FIC_NAME_WORKLOAD}']" --output json 2>/dev/null | jq -e 'length > 0' >/dev/null 2>&1; then
@@ -162,17 +162,17 @@ for ENV in dev test stage prod; do
     log_error "FIC missing: ${FIC_NAME_WORKLOAD}"
     ERRORS=$((ERRORS + 1))
   fi
-  
+
   if [ $FIC_COUNT -eq $FIC_EXPECTED ]; then
     log_success "All ${FIC_EXPECTED} FIC found for ${SP_NAME}"
   else
     log_warning "Only ${FIC_COUNT}/${FIC_EXPECTED} FIC found for ${SP_NAME}"
     WARNINGS=$((WARNINGS + 1))
   fi
-  
+
   # Verify RBAC Role Assignments
   echo "  Checking RBAC Role Assignments..."
-  
+
   # Check Contributor role on Resource Group
   RG_SCOPE="/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${RG_NAME}"
   if az role assignment list \
@@ -186,7 +186,7 @@ for ENV in dev test stage prod; do
     log_error "Contributor role missing on Resource Group"
     ERRORS=$((ERRORS + 1))
   fi
-  
+
   # Check User Access Administrator role on Resource Group
   if az role assignment list \
     --assignee "$APP_ID" \
@@ -199,7 +199,7 @@ for ENV in dev test stage prod; do
     log_error "User Access Administrator role missing on Resource Group"
     ERRORS=$((ERRORS + 1))
   fi
-  
+
   # Check Storage Blob Data Contributor role on Storage Account
   SA_SCOPE="/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${RG_NAME}/providers/Microsoft.Storage/storageAccounts/${SA_NAME}"
   if az role assignment list \
@@ -213,7 +213,7 @@ for ENV in dev test stage prod; do
     log_error "Storage Blob Data Contributor role missing on Storage Account"
     ERRORS=$((ERRORS + 1))
   fi
-  
+
   # Check Contributor role on Subscription (from SP creation)
   SUB_SCOPE="/subscriptions/${SUBSCRIPTION_ID}"
   if az role assignment list \
@@ -227,7 +227,7 @@ for ENV in dev test stage prod; do
     log_warning "Contributor role missing on Subscription (may have been removed)"
     WARNINGS=$((WARNINGS + 1))
   fi
-  
+
   echo ""
 done
 

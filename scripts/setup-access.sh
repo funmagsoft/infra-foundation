@@ -45,9 +45,9 @@ for ENV in dev test stage prod; do
   ENV_UPPER=$(echo "$ENV" | tr '[:lower:]' '[:upper:]')
   APP_ID_VAR="${ENV_UPPER}_SP_APP_ID"
   OBJECT_ID_VAR="${ENV_UPPER}_SP_OBJECT_ID"
-  
+
   log_info "--- Creating Service Principal: ${SP_NAME} ---"
-  
+
   # Create Service Principal
   if [ "$DRY_RUN" = true ]; then
     echo "[DRY-RUN] az ad sp create-for-rbac --name \"$SP_NAME\" --role \"Contributor\" --scopes \"/subscriptions/${SUBSCRIPTION_ID}\" --output json" >&2
@@ -61,23 +61,23 @@ for ENV in dev test stage prod; do
       --role "Contributor" \
       --scopes "/subscriptions/${SUBSCRIPTION_ID}" \
       --output json)
-    
+
     APP_ID=$(echo "$SP_OUTPUT" | jq -r '.appId')
     OBJECT_ID=$(az ad sp show --id "$APP_ID" --query id --output tsv)
-    
+
     log_success "App ID (Client ID): $APP_ID"
     log_success "Object ID: $OBJECT_ID"
   fi
-  
+
   # Store for later use (both in file and as environment variable)
   # Write in .env format (KEY=value, not export KEY=value)
   write_file "$SP_IDS_FILE" "${APP_ID_VAR}=$APP_ID"
   write_file "$SP_IDS_FILE" "${OBJECT_ID_VAR}=$OBJECT_ID"
-  
+
   # Set environment variables directly (needed for dry-run mode)
   eval "export ${APP_ID_VAR}=\"$APP_ID\""
   eval "export ${OBJECT_ID_VAR}=\"$OBJECT_ID\""
-  
+
   echo ""
 done
 
@@ -106,27 +106,27 @@ for ENV in dev test stage prod; do
   ENV_UPPER=$(echo "$ENV" | tr '[:lower:]' '[:upper:]')
   APP_ID_VAR="${ENV_UPPER}_SP_APP_ID"
   eval "APP_ID=\$$APP_ID_VAR"
-  
+
   # Verify APP_ID is set
   if [ -z "$APP_ID" ]; then
     log_error "${APP_ID_VAR} is not set. Please check service-principals.env file."
     continue
   fi
-  
+
   log_info "--- Creating FIC for ${SP_NAME} (App ID: ${APP_ID}) ---"
-  
+
   # Get Object ID (skip in dry-run mode)
   if [ "$DRY_RUN" = true ]; then
     OBJECT_ID="<object-id-would-be-retrieved>"
   else
     OBJECT_ID=$(az ad sp show --id "$APP_ID" --query id --output tsv)
-    
+
     if [ -z "$OBJECT_ID" ]; then
       log_error "Could not retrieve Object ID for Service Principal ${SP_NAME}"
       continue
     fi
   fi
-  
+
   # FIC for infra-foundation repository (GitHub Environment)
   log_info "Creating FIC for infra-foundation (environment: ${ENV})..."
   run_cmd az ad app federated-credential create \
@@ -138,7 +138,7 @@ for ENV in dev test stage prod; do
       \"description\": \"GitHub Actions OIDC for infra-foundation repo ${ENV} environment\",
       \"audiences\": [\"api://AzureADTokenExchange\"]
     }" 2>/dev/null || log_warning "FIC may already exist, continuing..."
-  
+
   # FIC for infra-platform repository (GitHub Environment)
   log_info "Creating FIC for infra-platform (environment: ${ENV})..."
   run_cmd az ad app federated-credential create \
@@ -150,7 +150,7 @@ for ENV in dev test stage prod; do
       \"description\": \"GitHub Actions OIDC for infra-platform repo ${ENV} environment\",
       \"audiences\": [\"api://AzureADTokenExchange\"]
     }" 2>/dev/null || log_warning "FIC may already exist, continuing..."
-  
+
   # FIC for infra-workload-identity repository (GitHub Environment)
   log_info "Creating FIC for infra-workload-identity (environment: ${ENV})..."
   run_cmd az ad app federated-credential create \
@@ -162,7 +162,7 @@ for ENV in dev test stage prod; do
       \"description\": \"GitHub Actions OIDC for infra-workload-identity repo ${ENV} environment\",
       \"audiences\": [\"api://AzureADTokenExchange\"]
     }" 2>/dev/null || log_warning "FIC may already exist, continuing..."
-  
+
   log_success "FIC created for ${SP_NAME}"
   echo ""
 done
@@ -181,18 +181,18 @@ for ENV in dev test stage prod; do
   ENV_UPPER=$(echo "$ENV" | tr '[:lower:]' '[:upper:]')
   APP_ID_VAR="${ENV_UPPER}_SP_APP_ID"
   eval "APP_ID=\$$APP_ID_VAR"
-  
+
   # Verify APP_ID is set
   if [ -z "$APP_ID" ]; then
     log_error "${APP_ID_VAR} is not set. Please check service-principals.env file."
     continue
   fi
-  
+
   RG_NAME="rg-${PROJECT}-${ENV}"
   SA_NAME="tfstate${ORGANIZATION_FOR_SA}${PROJECT}${ENV}"
-  
+
   log_info "--- Assigning roles for ${SP_NAME} (App ID: ${APP_ID}) ---"
-  
+
   # Contributor role on Resource Group (already assigned, but verify)
   log_info "Assigning Contributor role on Resource Group..."
   run_cmd az role assignment create \
@@ -200,7 +200,7 @@ for ENV in dev test stage prod; do
     --role "Contributor" \
     --scope "/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${RG_NAME}" \
     --output none 2>/dev/null || log_warning "Role may already exist"
-  
+
   # User Access Administrator (to assign roles to Managed Identities later)
   log_info "Assigning User Access Administrator role on Resource Group..."
   run_cmd az role assignment create \
@@ -208,7 +208,7 @@ for ENV in dev test stage prod; do
     --role "User Access Administrator" \
     --scope "/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${RG_NAME}" \
     --output none 2>/dev/null || log_warning "Role may already exist"
-  
+
   # Storage Blob Data Contributor on State Storage Account
   log_info "Assigning Storage Blob Data Contributor role on Storage Account..."
   run_cmd az role assignment create \
@@ -216,7 +216,7 @@ for ENV in dev test stage prod; do
     --role "Storage Blob Data Contributor" \
     --scope "/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${RG_NAME}/providers/Microsoft.Storage/storageAccounts/${SA_NAME}" \
     --output none 2>/dev/null || log_warning "Role may already exist"
-  
+
   log_success "Roles assigned for ${SP_NAME}"
   echo ""
 done

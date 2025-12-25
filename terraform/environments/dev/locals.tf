@@ -13,4 +13,3 @@ locals {
     TerraformPath = "terraform/environments/${local.environment}"
   }
 }
-

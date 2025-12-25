@@ -29,20 +29,20 @@ SETUP_SCRIPTS=(
 # Run each setup script
 for setup_script in "${SETUP_SCRIPTS[@]}"; do
   script_path="${SCRIPT_DIR}/${setup_script}"
-  
+
   if [ ! -f "$script_path" ]; then
     log_error "Setup script not found: $script_path"
     FAILED_SETUPS+=("$setup_script (not found)")
     TOTAL_ERRORS=$((TOTAL_ERRORS + 1))
     continue
   fi
-  
+
   echo ""
   echo "================================================================================"
   echo "Running: $setup_script"
   echo "================================================================================"
   echo ""
-  
+
   # Run the setup script and pass through --dry-run if set
   if [ "$DRY_RUN" = true ]; then
     if bash "$script_path" --dry-run; then
@@ -63,7 +63,7 @@ for setup_script in "${SETUP_SCRIPTS[@]}"; do
       TOTAL_ERRORS=$((TOTAL_ERRORS + 1))
     fi
   fi
-  
+
   echo ""
 done
 
@@ -104,4 +104,3 @@ else
   echo "Please review the output above and fix the issues before proceeding."
   exit 1
 fi
-

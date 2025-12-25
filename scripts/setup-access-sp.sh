@@ -46,9 +46,9 @@ for ENV in dev test stage prod; do
   ENV_UPPER=$(echo "$ENV" | tr '[:lower:]' '[:upper:]')
   APP_ID_VAR="${ENV_UPPER}_SP_APP_ID"
   SP_NAME="sp-gha-${PROJECT}-infra-${ENV}"
-  
+
   eval "APP_ID=\$$APP_ID_VAR"
-  
+
   # Verify APP_ID is set
   if [ -z "$APP_ID" ]; then
     log_error "${APP_ID_VAR} is not set. Please check service-principals.env file."
@@ -56,9 +56,9 @@ for ENV in dev test stage prod; do
     echo ""
     continue
   fi
-  
+
   log_info "--- Granting access to ${SA_NAME} for ${SP_NAME} (App ID: ${APP_ID}) ---"
-  
+
   # Grant Storage Blob Data Contributor role
   if run_cmd az role assignment create \
     --assignee "$APP_ID" \
@@ -87,7 +87,7 @@ for ENV in dev test stage prod; do
       GRANTED=$((GRANTED + 1))
     fi
   fi
-  
+
   echo ""
 done
 

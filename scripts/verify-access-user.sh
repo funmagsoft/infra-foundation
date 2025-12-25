@@ -58,9 +58,9 @@ for ENV in dev test stage prod; do
   RG_NAME="rg-${PROJECT}-${ENV}"
   SA_NAME="tfstate${ORGANIZATION_FOR_SA}${PROJECT}${ENV}"
   SA_SCOPE="/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${RG_NAME}/providers/Microsoft.Storage/storageAccounts/${SA_NAME}"
-  
+
   echo "=== Verifying access to ${SA_NAME} (${ENV} environment) ==="
-  
+
   # Check if Storage Account exists
   if ! az storage account show \
     --name "$SA_NAME" \
@@ -71,7 +71,7 @@ for ENV in dev test stage prod; do
     echo ""
     continue
   fi
-  
+
   # Check if role assignment exists
   ROLE_ASSIGNMENT=$(az role assignment list \
     --assignee "$CURRENT_USER_OBJECT_ID" \
@@ -79,7 +79,7 @@ for ENV in dev test stage prod; do
     --role "Storage Blob Data Contributor" \
     --query "[].{Principal:principalName, Role:roleDefinitionName, Scope:scope}" \
     --output table 2>/dev/null)
-  
+
   if echo "$ROLE_ASSIGNMENT" | grep -q "Storage Blob Data Contributor"; then
     log_success "Storage Blob Data Contributor role assigned on ${SA_NAME}"
     GRANTED=$((GRANTED + 1))
@@ -87,7 +87,7 @@ for ENV in dev test stage prod; do
     log_error "Storage Blob Data Contributor role missing on ${SA_NAME}"
     ERRORS=$((ERRORS + 1))
   fi
-  
+
   echo ""
 done
 

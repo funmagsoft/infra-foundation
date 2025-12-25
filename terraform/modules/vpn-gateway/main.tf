@@ -1,3 +1,13 @@
+terraform {
+  required_version = ">= 1.5.0"
+  required_providers {
+    azurerm = {
+      source  = "hashicorp/azurerm"
+      version = "~> 3.0"
+    }
+  }
+}
+
 # Public IP for VPN Gateway
 resource "azurerm_public_ip" "vpn" {
   name                = var.public_ip_name
@@ -38,4 +48,3 @@ resource "azurerm_virtual_network_gateway" "vpn" {
 
   tags = var.tags
 }
-

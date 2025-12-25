@@ -12,4 +12,3 @@ output "public_ip_address" {
   description = "Public IP address of the VPN Gateway"
   value       = azurerm_public_ip.vpn.ip_address
 }
-

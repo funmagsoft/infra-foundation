@@ -121,4 +121,3 @@ else
   echo "  - Resource Groups verified: ${VERIFIED}/4"
   exit 1
 fi
-

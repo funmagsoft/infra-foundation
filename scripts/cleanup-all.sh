@@ -49,19 +49,19 @@ for ENV in dev test stage prod; do
   ENV_UPPER=$(echo "$ENV" | tr '[:lower:]' '[:upper:]')
   APP_ID_VAR="${ENV_UPPER}_SP_APP_ID"
   eval "APP_ID=\$$APP_ID_VAR"
-  
+
   RG_NAME="rg-${PROJECT}-${ENV}"
   SA_NAME="tfstate${ORGANIZATION_FOR_SA}${PROJECT}${ENV}"
   SP_NAME="sp-gha-${PROJECT}-infra-${ENV}"
-  
+
   # Try to get APP_ID from Azure if not in env file
   if [ -z "$APP_ID" ] || [ "$APP_ID" == "null" ] || [ "$APP_ID" == "" ]; then
     APP_ID=$(az ad sp list --filter "displayName eq '${SP_NAME}'" --query "[0].appId" -o tsv 2>/dev/null || echo "")
   fi
-  
+
   if [ -n "$APP_ID" ] && [ "$APP_ID" != "null" ] && [ "$APP_ID" != "" ]; then
     log_info "--- Deleting role assignments for ${SP_NAME} (App ID: ${APP_ID}) ---"
-    
+
     # Delete role assignments on Storage Account
     SA_SCOPE="/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${RG_NAME}/providers/Microsoft.Storage/storageAccounts/${SA_NAME}"
     ROLE_ASSIGNMENTS=$(az role assignment list --assignee "$APP_ID" --scope "$SA_SCOPE" --query "[].roleDefinitionName" --output tsv 2>/dev/null)
@@ -76,7 +76,7 @@ for ENV in dev test stage prod; do
     else
       log_info "No role assignments found on Storage Account for ${SP_NAME}"
     fi
-    
+
     # Delete role assignments on Resource Group
     RG_SCOPE="/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${RG_NAME}"
     ROLE_ASSIGNMENTS=$(az role assignment list --assignee "$APP_ID" --scope "$RG_SCOPE" --query "[].roleDefinitionName" --output tsv 2>/dev/null)
@@ -91,7 +91,7 @@ for ENV in dev test stage prod; do
     else
       log_info "No role assignments found on Resource Group for ${SP_NAME}"
     fi
-    
+
     # Delete role assignments on Subscription
     SUB_SCOPE="/subscriptions/${SUBSCRIPTION_ID}"
     ROLE_ASSIGNMENTS=$(az role assignment list --assignee "$APP_ID" --scope "$SUB_SCOPE" --query "[].roleDefinitionName" --output tsv 2>/dev/null)
@@ -124,7 +124,7 @@ if [ -n "$CURRENT_USER_OBJECT_ID" ] && [ "$CURRENT_USER_OBJECT_ID" != "null" ]; 
     RG_NAME="rg-${PROJECT}-${ENV}"
     SA_NAME="tfstate${ORGANIZATION_FOR_SA}${PROJECT}${ENV}"
     SA_SCOPE="/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${RG_NAME}/providers/Microsoft.Storage/storageAccounts/${SA_NAME}"
-    
+
     if run_cmd az role assignment delete --assignee "$CURRENT_USER_OBJECT_ID" --scope "$SA_SCOPE" --role "Storage Blob Data Contributor" --output none 2>/dev/null; then
       log_success "Deleted Storage Blob Data Contributor role for current user on ${SA_NAME}"
     fi
@@ -142,17 +142,17 @@ for ENV in dev test stage prod; do
   ENV_UPPER=$(echo "$ENV" | tr '[:lower:]' '[:upper:]')
   APP_ID_VAR="${ENV_UPPER}_SP_APP_ID"
   eval "APP_ID=\$$APP_ID_VAR"
-  
+
   SP_NAME="sp-gha-${PROJECT}-infra-${ENV}"
-  
+
   # Try to get APP_ID from Azure if not in env file
   if [ -z "$APP_ID" ] || [ "$APP_ID" == "null" ] || [ "$APP_ID" == "" ]; then
     APP_ID=$(az ad sp list --filter "displayName eq '${SP_NAME}'" --query "[0].appId" -o tsv 2>/dev/null || echo "")
   fi
-  
+
   if [ -n "$APP_ID" ] && [ "$APP_ID" != "null" ] && [ "$APP_ID" != "" ]; then
     log_info "--- Deleting FIC for ${SP_NAME} (App ID: ${APP_ID}) ---"
-    
+
     # List and delete all FIC for this Service Principal
     if [ "$DRY_RUN" = true ]; then
       # In dry-run mode, check if FIC exist
@@ -199,12 +199,12 @@ for ENV in dev test stage prod; do
   ENV_UPPER=$(echo "$ENV" | tr '[:lower:]' '[:upper:]')
   APP_ID_VAR="${ENV_UPPER}_SP_APP_ID"
   eval "APP_ID=\$$APP_ID_VAR"
-  
+
   # Try to get APP_ID from Azure if not in env file
   if [ -z "$APP_ID" ] || [ "$APP_ID" == "null" ] || [ "$APP_ID" == "" ]; then
     APP_ID=$(az ad sp list --filter "displayName eq '${SP_NAME}'" --query "[0].appId" -o tsv 2>/dev/null || echo "")
   fi
-  
+
   if [ -n "$APP_ID" ] && [ "$APP_ID" != "null" ] && [ "$APP_ID" != "" ]; then
     log_info "Deleting ${SP_NAME} (${APP_ID})..."
     if run_cmd az ad sp delete --id "$APP_ID" --output none 2>/dev/null; then
@@ -229,9 +229,9 @@ echo ""
 for ENV in dev test stage prod; do
   RG_NAME="rg-${PROJECT}-${ENV}"
   SA_NAME="tfstate${ORGANIZATION_FOR_SA}${PROJECT}${ENV}"
-  
+
   log_info "--- Deleting Storage Account: ${SA_NAME} ---"
-  
+
   # Check if Storage Account exists
   if [ "$DRY_RUN" != true ]; then
     if az storage account show --name "$SA_NAME" --resource-group "$RG_NAME" --output none 2>/dev/null; then
@@ -245,7 +245,7 @@ for ENV in dev test stage prod; do
           fi
         done
       fi
-      
+
       # Delete Storage Account
       if run_cmd az storage account delete --name "$SA_NAME" --resource-group "$RG_NAME" --yes --output none 2>/dev/null; then
         log_success "Deleted Storage Account: ${SA_NAME}"
@@ -260,7 +260,7 @@ for ENV in dev test stage prod; do
   else
     log_info "[DRY-RUN] Would delete Storage Account: ${SA_NAME} and all containers"
   fi
-  
+
   echo ""
 done
 
@@ -273,9 +273,9 @@ echo ""
 
 for ENV in dev test stage prod; do
   RG_NAME="rg-${PROJECT}-${ENV}"
-  
+
   log_info "--- Deleting Resource Group: ${RG_NAME} ---"
-  
+
   if [ "$DRY_RUN" != true ]; then
     if az group show --name "$RG_NAME" --output none 2>/dev/null; then
       log_info "Deleting Resource Group ${RG_NAME} (this will delete all remaining resources)..."
@@ -292,7 +292,7 @@ for ENV in dev test stage prod; do
   else
     log_info "[DRY-RUN] Would delete Resource Group: ${RG_NAME} (and all resources within it)"
   fi
-  
+
   echo ""
 done
 
@@ -342,4 +342,3 @@ else
     exit 1
   fi
 fi
-

@@ -1,3 +1,13 @@
+terraform {
+  required_version = ">= 1.5.0"
+  required_providers {
+    azurerm = {
+      source  = "hashicorp/azurerm"
+      version = "~> 3.0"
+    }
+  }
+}
+
 resource "azurerm_virtual_network" "main" {
   name                = var.vnet_name
   location            = var.location
@@ -44,4 +54,3 @@ resource "azurerm_subnet" "gateway" {
   virtual_network_name = azurerm_virtual_network.main.name
   address_prefixes     = [var.gateway_subnet_cidr]
 }
-

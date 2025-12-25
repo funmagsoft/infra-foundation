@@ -42,4 +42,3 @@ output "mgmt_nsg_id" {
   description = "ID of the NSG for Management subnet"
   value       = azurerm_network_security_group.mgmt.id
 }
-

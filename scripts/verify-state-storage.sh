@@ -37,9 +37,9 @@ echo "2. Checking Storage Accounts..."
 for ENV in dev test stage prod; do
   SA_NAME="tfstate${ORGANIZATION_FOR_SA}${PROJECT}${ENV}"
   RG_NAME="rg-${PROJECT}-${ENV}"
-  
+
   echo "=== Verifying ${SA_NAME} ==="
-  
+
   # Check Storage Account exists
   if az storage account show \
     --name "$SA_NAME" \
@@ -51,7 +51,7 @@ for ENV in dev test stage prod; do
     log_error "Storage Account missing"
     continue
   fi
-  
+
   # Check container exists
   if az storage container show \
     --name tfstate \
@@ -63,32 +63,32 @@ for ENV in dev test stage prod; do
   else
     log_error "Container 'tfstate' missing"
   fi
-  
+
   # Check versioning enabled
   VERSIONING=$(az storage account blob-service-properties show \
     --account-name "$SA_NAME" \
     --resource-group "$RG_NAME" \
     --query "isVersioningEnabled" \
     --output tsv)
-  
+
   if [ "$VERSIONING" == "true" ]; then
     log_success "Blob versioning enabled"
   else
     log_error "Blob versioning not enabled"
   fi
-  
+
   # Check soft delete enabled
   SOFT_DELETE=$(az storage account blob-service-properties show \
     --account-name "$SA_NAME" \
     --resource-group "$RG_NAME" \
     --query "deleteRetentionPolicy.enabled" \
     --output tsv)
-  
+
   if [ "$SOFT_DELETE" == "true" ]; then
     log_success "Soft delete enabled"
   else
     log_error "Soft delete not enabled"
   fi
-  
+
   echo ""
 done

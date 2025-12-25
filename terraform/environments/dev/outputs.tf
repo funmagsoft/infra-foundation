@@ -52,4 +52,3 @@ output "vpn_public_ip" {
   description = "Public IP address of VPN Gateway"
   value       = var.enable_vpn_gateway ? module.vpn_gateway[0].public_ip_address : null
 }
-

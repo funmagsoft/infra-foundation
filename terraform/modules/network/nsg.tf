@@ -185,4 +185,3 @@ resource "azurerm_network_security_rule" "mgmt_deny_all_inbound" {
   resource_group_name         = var.resource_group_name
   network_security_group_name = azurerm_network_security_group.mgmt.name
 }
-

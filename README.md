@@ -13,7 +13,7 @@ This repository contains Terraform code for:
 
 ## Structure
 
-```
+```console
 terraform/
 ├── modules/
 │   ├── network/
@@ -79,7 +79,7 @@ Before running Terraform, you must set up the foundational infrastructure using 
   - Creates 12 FIC total (3 repos × 4 environments):
     - `infra-foundation` repository for each environment
     - `infra-platform` repository for each environment
-    - `infra-workload-identity` repository for each environment
+    - `infra-identity` repository for each environment
   - Each FIC is scoped to a specific GitHub repository and environment
   
   **RBAC Role Assignments:**
@@ -100,6 +100,74 @@ Before running Terraform, you must set up the foundational infrastructure using 
 - **`setup-access-sp.sh`** - Grants Service Principals Storage Blob Data Contributor role on their respective state storage accounts for Terraform state access. This is a critical role assignment - it allows the Service Principals created by `setup-access.sh` to read and write Terraform state files stored in the Storage Accounts. When Terraform runs in GitHub Actions, it needs to authenticate as the Service Principal and access the state files to track infrastructure changes. Without this role, Terraform cannot read or update the state, causing deployments to fail.
 
 All setup scripts support `--dry-run` option to preview changes without executing them.
+
+## Pre-commit Hooks
+
+This repository uses pre-commit hooks to ensure code quality and consistency. The hooks automatically:
+
+- Format Terraform files (`terraform fmt`)
+- Validate Terraform syntax (`terraform validate`)
+- Lint Terraform code (`tflint`)
+- Ensure files end with exactly one newline
+- Remove trailing whitespace
+- Validate YAML/JSON syntax
+- Lint Markdown documentation
+
+### Installation
+
+1. Install pre-commit:
+
+```bash
+# Using pip (recommended)
+pip install pre-commit
+
+# Or using Homebrew (macOS)
+brew install pre-commit
+```
+
+2. Install the hooks in this repository:
+
+```bash
+cd /path/to/infra-foundation
+pre-commit install
+```
+
+3. Install hook dependencies (downloads tools automatically):
+
+```bash
+pre-commit install-hooks
+```
+
+### Usage
+
+Hooks run automatically on `git commit`. To run manually:
+
+```bash
+# Run on all files
+pre-commit run --all-files
+
+# Run only on staged files
+pre-commit run
+
+# Run a specific hook
+pre-commit run terraform_fmt --all-files
+```
+
+### Updating Hooks
+
+To update hooks to the latest versions:
+
+```bash
+pre-commit autoupdate
+```
+
+### Skipping Hooks (Not Recommended)
+
+Only skip hooks in exceptional circumstances:
+
+```bash
+git commit --no-verify -m "message"
+```
 
 ### Cleanup Scripts
 

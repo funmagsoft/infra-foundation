@@ -51,7 +51,7 @@ echo ""
 # Set GitHub organization and repository names (same as setup-access.sh)
 FOUNDATION_REPO="${ORGANIZATION}/infra-foundation"
 PLATFORM_REPO="${ORGANIZATION}/infra-platform"
-WORKLOAD_IDENTITY_REPO="${ORGANIZATION}/infra-workload-identity"
+WORKLOAD_IDENTITY_REPO="${ORGANIZATION}/infra-identity"
 
 # Verify Service Principals, FIC, and RBAC roles for each environment
 echo "3. Verifying Service Principals, FIC, and RBAC roles..."
@@ -153,8 +153,8 @@ for ENV in dev test stage prod; do
     ERRORS=$((ERRORS + 1))
   fi
 
-  # Check FIC for infra-workload-identity
-  FIC_NAME_WORKLOAD="GitHubInfraWorkloadIdentityEnv-${ENV}"
+  # Check FIC for infra-identity
+  FIC_NAME_WORKLOAD="GitHubInfraIdentityEnv-${ENV}"
   if az ad app federated-credential list --id "$APP_ID" --query "[?name=='${FIC_NAME_WORKLOAD}']" --output json 2>/dev/null | jq -e 'length > 0' >/dev/null 2>&1; then
     log_success "FIC exists: ${FIC_NAME_WORKLOAD}"
     FIC_COUNT=$((FIC_COUNT + 1))

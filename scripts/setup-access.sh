@@ -98,7 +98,7 @@ echo ""
 # Set GitHub organization and repository names
 FOUNDATION_REPO="${ORGANIZATION}/infra-foundation"
 PLATFORM_REPO="${ORGANIZATION}/infra-platform"
-WORKLOAD_IDENTITY_REPO="${ORGANIZATION}/infra-workload-identity"
+WORKLOAD_IDENTITY_REPO="${ORGANIZATION}/infra-identity"
 
 # For each environment
 for ENV in dev test stage prod; do
@@ -151,15 +151,15 @@ for ENV in dev test stage prod; do
       \"audiences\": [\"api://AzureADTokenExchange\"]
     }" 2>/dev/null || log_warning "FIC may already exist, continuing..."
 
-  # FIC for infra-workload-identity repository (GitHub Environment)
-  log_info "Creating FIC for infra-workload-identity (environment: ${ENV})..."
+  # FIC for infra-identity repository (GitHub Environment)
+  log_info "Creating FIC for infra-identity (environment: ${ENV})..."
   run_cmd az ad app federated-credential create \
     --id "$APP_ID" \
     --parameters "{
-      \"name\": \"GitHubInfraWorkloadIdentityEnv-${ENV}\",
+      \"name\": \"GitHubInfraIdentityEnv-${ENV}\",
       \"issuer\": \"https://token.actions.githubusercontent.com\",
       \"subject\": \"repo:${WORKLOAD_IDENTITY_REPO}:environment:${ENV}\",
-      \"description\": \"GitHub Actions OIDC for infra-workload-identity repo ${ENV} environment\",
+      \"description\": \"GitHub Actions OIDC for infra-identity repo ${ENV} environment\",
       \"audiences\": [\"api://AzureADTokenExchange\"]
     }" 2>/dev/null || log_warning "FIC may already exist, continuing..."
 
